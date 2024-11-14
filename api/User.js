@@ -4,8 +4,39 @@ const router = express.Router();
 // Mongodb user model
 const User = require("../models/User");
 
+// Mongodb user verification model
+const UserVerification = require("../models/UserVerification");
+
+// Email handler
+const nodemailer = require("nodemailer");
+
+// Unique String
+const { v4: uuidv4 } = require("uuid");
+
+// Env variables
+require("dotenv").config();
+
 // Password handler
 const bcrypt = require("bcrypt");
+
+// Nodemailer stuff
+let transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.AUTH_EMAIL,
+    pass: process.env.AUTH_PASSWORD,
+  },
+});
+
+// Testing Success
+transporter.verify((error, success) => {
+  if (error) {
+    console.log(error);
+  } else {
+    console.log("Server is ready to take our messages");
+    console.log(success);
+  }
+});
 
 // Signup
 router.post("/signup", (req, res) => {
@@ -63,16 +94,14 @@ router.post("/signup", (req, res) => {
                 email,
                 password: hashedPassword,
                 dateOfBirth,
+                verified: false,
               });
 
               newUser
                 .save()
                 .then((result) => {
-                  res.status(201).json({
-                    status: "SUCCESS",
-                    message: "User created successfully!",
-                    data: result,
-                  });
+                  // Handle email verification
+                  sendVerificationEmail(result, res);
                 })
                 .catch((error) => {
                   res.status(500).json({
