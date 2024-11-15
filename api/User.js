@@ -7,6 +7,9 @@ const User = require("../models/User");
 // Mongodb user verification model
 const UserVerification = require("../models/UserVerification");
 
+// Mongodb user verification model
+const PasswordReset = require("../models/PasswordReset");
+
 // Email handler
 const nodemailer = require("nodemailer");
 
@@ -142,8 +145,13 @@ const sendVerificationEmail = ({ _id, email }, res) => {
   const mailOptions = {
     from: process.env.AUTH_EMAIL,
     to: email,
-    subject: "Verify your email address",
-    html: `<p>Verify your email address to complete the signup and login into your account.</p><p>This link will <b>expires in 2 hours</b>.</p><p>Press <a href="${currentUrl + "user/verify/" + _id + "/" + uniqueString}">here</a> to verify.</p>`,
+    subject: "Verify Your Email Address",
+    html: `
+            <p>Verify your email address to complete the signup and login into your account.</p>
+            <p>This link will <b>expire in 2 hours</b>.</p>
+            <p>Press <a href="${currentUrl + "user/verify/" + _id + "/" + uniqueString}">here</a> to verify.</p>
+            <p>Team Dokumin ❤️</p>
+          `,
   };
 
   // Hash the unique string
@@ -364,5 +372,127 @@ router.post("/signin", (req, res) => {
       });
   }
 });
+
+// Password reset stuff
+router.post("/requestPasswordReset", (req, res) => {
+  const { email, redirectUrl } = req.body;
+
+  // Check if email exists
+  User.find({ email })
+    .then((data) => {
+      if (data.length) {
+        // User exists
+
+        // Check if user is verified
+        if (!data[0].verified) {
+          // User is not verified
+          res.status(400).json({
+            status: "FAILED",
+            message:
+              "Email has not been verified yet. Please check your inbox!",
+          });
+        } else {
+          // User is verified
+          sendResetEmail(data[0], redirectUrl, res);
+        }
+      } else {
+        res.status(400).json({
+          status: "FAILED",
+          message: "No user found with the provided email!",
+        });
+      }
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({
+        status: "FAILED",
+        message: "An error occured while checking for existing user!",
+      });
+    });
+});
+
+// Send password reset email
+const sendResetEmail = ({ _id, email }, redirectUrl, res) => {
+  const resetString = uuidv4() + _id;
+
+  // Clear all existing reset records
+  PasswordReset.deleteMany({ userId: _id })
+    .then((result) => {
+      // Reset record deleted successfully
+
+      // Sent email
+      const mailOptions = {
+        from: process.env.AUTH_EMAIL,
+        to: email,
+        subject: "Reset Password",
+        html: `<p>Click the link below to reset your password.</p>
+               <p>Do not share this link with anyone.</p>
+               <p>This link will <b>expire in 30 minutes</b>.</p>
+               <p>Press <a href="${redirectUrl + "/" + _id + "/" + resetString}">here</a> to reset password.</p>
+               <p>Team Dokumin ❤️</p>
+               `,
+      };
+
+      // Hash the reset string
+      const saltRounds = 10;
+      bcrypt
+        .hash(resetString, saltRounds)
+        .then((hashedResetString) => {
+          // Set values in passwordReset model
+          const newPasswordReset = new PasswordReset({
+            userId: _id,
+            resetString: hashedResetString,
+            createdAt: Date.now(),
+            expiresAt: Date.now() + 1800000, // 30 minutes
+          });
+
+          newPasswordReset
+            .save()
+            .then(() => {
+              // Email sent successfully
+              transporter
+                .sendMail(mailOptions)
+                .then(() => {
+                  res.status(200).json({
+                    status: "PENDING",
+                    message: "Password reset email sent!",
+                  });
+                })
+                .catch((error) => {
+                  console.log(error);
+                  res.status(500).json({
+                    status: "FAILED",
+                    message:
+                      "An error occured while sending the password reset email!",
+                  });
+                });
+            })
+            .catch((error) => {
+              console.log(error);
+              res.status(500).json({
+                status: "FAILED",
+                message:
+                  "An error occured while saving the password reset data!",
+              });
+            });
+        })
+        .catch((error) => {
+          console.log(error);
+          res.status(500).json({
+            status: "FAILED",
+            message: "An error occured while hashing the password reset data!",
+          });
+        });
+    })
+    .catch((error) => {
+      // Error clearing existing password reset records
+      console.log(error);
+      res.status(500).json({
+        status: "FAILED",
+        message:
+          "An error occured while clearing existing password reset records!",
+      });
+    });
+};
 
 module.exports = router;
