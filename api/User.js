@@ -19,6 +19,9 @@ require("dotenv").config();
 // Password handler
 const bcrypt = require("bcrypt");
 
+// Path for static verified page
+const path = require("path");
+
 // Nodemailer stuff
 let transporter = nodemailer.createTransport({
   service: "gmail",
@@ -193,6 +196,49 @@ const sendVerificationEmail = ({ _id, email }, res) => {
       });
     });
 };
+
+// Verify email
+router.get("/verify/:userId/:uniqueString", (req, res) => {
+  let { userId, uniqueString } = req.params;
+
+  UserVerification.find({ userId })
+    .then((result) => {
+      if (result.length > 0) {
+        // User verification record exists so we proceed
+        const { expiresAt } = result[0];
+
+        // Check if verification link has expired
+        if (expiresAt < Date.now()) {
+          // Verification link has expired
+          UserVerification.deleteOne({ userId })
+            .then()
+            .catch((error) => {
+              console.log(error);
+              let message =
+                "An error occured while clearing expired user verification record!";
+              res.redirect(`/user/verified/error=true&message=${message}`);
+            });
+        } else {
+        }
+      } else {
+        // User verification record does not exist
+        let message =
+          "Account record does not exist or has been verified already. Please sign up or log in!";
+        res.redirect(`/user/verified/error=true&message=${message}`);
+      }
+    })
+    .catch((error) => {
+      console.log(error);
+      let message =
+        "An error occurred while cheking for existing user verification record!";
+      res.redirect(`/user/verified/error=true&message=${message}`);
+    });
+});
+
+// Verify page handler
+router.get("/verified", (req, res) => {
+  res.sendFile(path.join(__dirname + "/views/verified.html"));
+});
 
 // Signin
 router.post("/signin", (req, res) => {
