@@ -128,6 +128,72 @@ router.post("/signup", (req, res) => {
   }
 });
 
+// Send verification email
+const sendVerificationEmail = ({ _id, email }, res) => {
+  // url to be used in the email
+  const currentUrl = "http://localhost:5000/";
+
+  const uniqueString = uuidv4() + _id;
+
+  // mail options
+  const mailOptions = {
+    from: process.env.AUTH_EMAIL,
+    to: email,
+    subject: "Verify your email address",
+    html: `<p>Verify your email address to complete the signup and login into your account.</p><p>This link will <b>expires in 2 hours</b>.</p><p>Press <a href="${currentUrl + "user/verify/" + _id + "/" + uniqueString}">here</a> to verify.</p>`,
+  };
+
+  // Hash the unique string
+  const saltRounds = 10;
+  bcrypt
+    .hash(uniqueString, saltRounds)
+    .then((hashedUniqueString) => {
+      // Set values in userVerification model
+      const newVerification = new UserVerification({
+        userId: _id,
+        uniqueString: hashedUniqueString,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 7200000, // 2 hours
+      });
+
+      newVerification
+        .save()
+        .then(() => {
+          // Send email
+          transporter
+            .sendMail(mailOptions)
+            .then(() => {
+              // Email sent and verification data saved
+              res.status(200).json({
+                status: "PENDING",
+                message: "Verification email sent!",
+              });
+            })
+            .catch((error) => {
+              console.log(error);
+              res.status(500).json({
+                status: "FAILED",
+                message: "Verification email failed!",
+              });
+            });
+        })
+        .catch((error) => {
+          console.log(error);
+          res.status(500).json({
+            status: "FAILED",
+            message: "Could not save verification email data!",
+          });
+        });
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({
+        status: "FAILED",
+        message: "An error occurred while hashing email data!",
+      });
+    });
+};
+
 // Signin
 router.post("/signin", (req, res) => {
   let { email, password } = req.body;
