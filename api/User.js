@@ -205,6 +205,27 @@ const sendVerificationEmail = ({ _id, email }, res) => {
     });
 };
 
+// Resend Verification
+router.post("/resendVerification", async (req, res) => {
+  try {
+    let { userId, email } = req.body;
+
+    if (!userId || !email) {
+      throw new Error("userId and email are required!");
+    } else {
+      // Delte existing verification record
+      await UserVerification.deleteMany({ userId });
+      sendVerificationEmail({ _id: userId, email }, res);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      status: "FAILED",
+      message: `Verivification email failed. ${error.message}`,
+    });
+  }
+});
+
 // Verify email
 router.get("/verify/:userId/:uniqueString", (req, res) => {
   let { userId, uniqueString } = req.params;
