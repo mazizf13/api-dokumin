@@ -1,3 +1,5 @@
+const express = require("express");
+
 // mongodb
 require("./config/db");
 
@@ -11,8 +13,7 @@ app.use(cors());
 
 const UserRouter = require("./api/User");
 
-const bodyParser = require("express").json;
-app.use(bodyParser());
+app.use(express.json());
 
 app.use("/user", UserRouter);
 

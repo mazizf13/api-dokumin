@@ -47,10 +47,10 @@ transporter.verify((error, success) => {
 // Signup
 router.post("/signup", (req, res) => {
   let { name, email, password, dateOfBirth } = req.body;
-  name = name.trim();
-  email = email.trim();
-  password = password.trim();
-  dateOfBirth = dateOfBirth.trim();
+  if (name) name = name.trim();
+  if (email) email = email.trim();
+  if (password) password = password.trim();
+  if (dateOfBirth) dateOfBirth = dateOfBirth.trim();
 
   if (name == "" || email == "" || password == "" || dateOfBirth == "") {
     res.status(400).json({
@@ -307,8 +307,8 @@ router.get("/verified", (req, res) => {
 // Signin
 router.post("/signin", (req, res) => {
   let { email, password } = req.body;
-  email = email.trim();
-  password = password.trim();
+  if (email) email = email.trim();
+  if (password) password = password.trim();
 
   if (email == "" || password == "") {
     res.status(400).json({
