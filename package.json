@@ -1,33 +1,33 @@
 {
-  "name": "dokumin-api",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
-    "dev": "nodemon server.js",
-    "lint": "eslint .",
-    "format:write": "prettier --write ."
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "bcrypt": "^5.1.1",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.1",
-    "mongodb": "^6.10.0",
-    "mongoose": "^8.8.1",
-    "nodemailer": "^6.9.16",
-    "nodemon": "^3.1.7",
-    "uuid": "^11.0.3"
-  },
-  "devDependencies": {
-    "prettier": "^3.3.3"
-  },
-  "engines": {
-    "node": ">=14.0.0"
-  }
+	"name": "dokumin-api",
+	"version": "1.0.0",
+	"description": "",
+	"main": "server.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start": "node server.js",
+		"dev": "nodemon server.js",
+		"lint": "eslint .",
+		"format:write": "prettier --write ."
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"bcrypt": "^5.1.1",
+		"cors": "^2.8.5",
+		"dotenv": "^16.4.5",
+		"express": "^4.21.1",
+		"mongodb": "^6.10.0",
+		"mongoose": "^8.8.1",
+		"nodemailer": "^6.9.16",
+		"nodemon": "^3.1.7",
+		"uuid": "^11.0.3"
+	},
+	"devDependencies": {
+		"prettier": "^3.3.3"
+	},
+	"engines": {
+		"node": ">=14.0.0"
+	}
 }
